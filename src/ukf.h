@@ -21,7 +21,6 @@ using Eigen::VectorXd;
 class UKF {
     
 private:
-    //+void NormalAngle(double *ang);
     void NormalizeAngle(double &ang);
     
 public:

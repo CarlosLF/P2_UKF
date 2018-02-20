@@ -25,10 +25,10 @@ UKF::UKF() {
     P_ = MatrixXd(5, 5);
     
     // Process noise standard deviation longitudinal acceleration in m/s^2
-    std_a_ = 30;
+    std_a_ = 2;
     
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 30;
+    std_yawdd_ = 2;
     
     //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
     // Laser measurement noise standard deviation position1 in m
@@ -95,9 +95,9 @@ UKF::~UKF() {}
 */
 
 void UKF::NormalizeAngle(double &ang){
-    while (ang > M_PI) ang -= 2. * M_PI;
-    while (ang < -M_PI) ang += 2. * M_PI;
-    
+    //while (ang > M_PI) ang -= 2. * M_PI;
+    //while (ang < -M_PI) ang += 2. * M_PI;
+    ang= atan2( sin(ang), cos(ang) );
 }
 
 
@@ -135,8 +135,10 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
                 
                 float px = ro * cos(phi);
                 float py = ro * sin(phi);
-                float vx = ro_dot * cos(phi);
-                float vy = ro_dot * sin(phi);
+                //float vx = ro_dot * cos(phi);
+                //float vy = ro_dot * sin(phi);
+                float vx = 0;
+                float vy = 0;
                 float v  = sqrt(vx * vx + vy * vy);
                 x_ << px, py, v, 0, 0;
                 
@@ -164,6 +166,12 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
         }
         float dt = (meas_package.timestamp_ - time_us_) / 1000000.0;	//dt - expressed in seconds
         time_us_ = meas_package.timestamp_;
+        
+        while (dt > 0.2){
+            double step = 0.1;
+            Prediction(step);
+            dt -= step;
+        }
         Prediction(dt);
         
         if (meas_package.sensor_type_ == MeasurementPackage::RADAR && use_radar_) {
@@ -441,8 +449,16 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
         
         // measurement model
         Zsig(0, i) = sqrt(p_x*p_x + p_y*p_y);
-        Zsig(1, i) = atan2(p_y, p_x);
-        Zsig(2, i) = (p_x*v1 + p_y*v2) / sqrt(p_x*p_x + p_y*p_y);
+        if (fabs(p_x) > 0.001 && fabs(p_y) > 0.001)
+            Zsig(1, i) = atan2(p_y, p_x);
+        else
+            Zsig(1, i) = 0;
+        
+        double den= sqrt(p_x*p_x + p_y*p_y);
+        if (fabs(den)> 0.001)
+            Zsig(2, i) = (p_x*v1 + p_y*v2) / den;
+        else
+            Zsig(2, i) = 0;
     }
     
     //mean predicted measurement
