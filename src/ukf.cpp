@@ -87,13 +87,6 @@ UKF::UKF() {
 
 UKF::~UKF() {}
 
-
-/*void UKF::NormalAngle(double *ang) {
-    while (*ang > M_PI) *ang -= 2. * M_PI;
-    while (*ang < -M_PI) *ang += 2. * M_PI;
-}
-*/
-
 void UKF::NormalizeAngle(double &ang){
     //while (ang > M_PI) ang -= 2. * M_PI;
     //while (ang < -M_PI) ang += 2. * M_PI;
